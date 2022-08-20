@@ -1,0 +1,114 @@
+<html><head>
+<style>
+	body {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	}
+	#selectionMarquee {
+		z-position: 1000;
+		position: absolute;
+		border: 1px dashed #ccc;
+	}
+
+	.selected-box {
+		z-position: 999;
+		position: absolute;
+		border: 1px dotted #333;
+	}
+	#all-cords {
+		position: fixed;
+		right: 0;
+		bottom: 0;
+		background: #9f9;
+	}
+</style>
+</head>
+<body><p>Click and drag to create coordinate selections</p>
+<div id="selectionMarquee" style="top: 147px; left: 296px; height: 0px; width: 0px; display: block;"></div>
+<ol id="all-cords">Boxes so far:
+<li>(573, 198) - (1240, 436)</li></ol>
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script>
+$(function () {
+	"use strict";
+	var startX,
+		startY,
+		selectedBoxes = [],
+		$selectionMarquee = $('#selectionMarquee'),
+		$allCords = $('#all-cords'),
+		positionBox = function ($box, coordinates) {
+			$box.css(
+				'top', coordinates.top
+			).css(
+				'left', coordinates.left
+			).css(
+				'height', coordinates.bottom - coordinates.top
+			).css(
+				'width', coordinates.right - coordinates.left
+			);
+		},
+
+		compareNumbers = function (a, b) {
+			return a - b;
+		},
+		getBoxCoordinates = function (startX, startY, endX, endY) {
+			var x = [startX, endX].sort(compareNumbers),
+				y = [startY, endY].sort(compareNumbers);
+
+			return {
+				top: y[0],
+				left: x[0],
+				right: x[1],
+				bottom: y[1]
+			};
+		},
+		trackMouse = function (event) {
+			var position = getBoxCoordinates(startX, startY, event.pageX, event.pageY);
+			console.log(position);
+			positionBox($selectionMarquee, position);
+		},
+		displayCoordinates = function () {
+			var msg = 'Boxes so far:\n';
+
+			selectedBoxes.forEach(function (box) {
+				msg += '<li>(' + box.left + ', ' + box.top + ') - (' + (box.left + box.right) + ', ' + (box.top + box.bottom) + ')</li>';
+			});
+			$allCords.html(msg);
+		};
+
+
+	$(document).on('mousedown', function (event) {
+		startX = event.pageX;
+		startY = event.pageY;
+		positionBox($selectionMarquee, getBoxCoordinates(startX, startY, startX, startY));
+		$selectionMarquee.show();
+		$(this).on('mousemove', trackMouse);
+	}).on('mouseup', function (event) {
+		var position,
+			$selectedBox;
+
+			$selectionMarquee.hide();
+
+			position = getBoxCoordinates(startX, startY, event.pageX, event.pageY);
+
+			if (position.left !== position.right && position.top !== position.bottom) {
+				$selectedBox = $('<div class="selected-box"></div>');
+				$selectedBox.hide();
+				$('body').append($selectedBox);
+
+				positionBox($selectedBox, position);
+
+				$selectedBox.show();
+
+				selectedBoxes.push(position);
+				displayCoordinates();
+				$(this).off('mousemove', trackMouse);
+			}
+	});
+});
+</script>
+<div class="selected-box" style="top: 198px; left: 573px; height: 40px; width: 94px;"></div></body></html>
